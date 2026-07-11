@@ -71,6 +71,40 @@ custom TwiML instead. For pure TwiML call logic, see `twilio-voice-twiml`.
 
 ---
 
+## Before you author: clarify the design
+
+A one-line request ("build an appointment reminder") rarely pins down a real
+flow, and guessing produces the wrong state machine. Before writing any JSON,
+find the gaps and resolve them with the requester — ask about the unknowns that
+would actually change the flow, hardest/most-consequential one first (the answer
+to one often reshapes the next), and prefer concrete options over open questions.
+Don't invent behavior for anything underspecified; surface it. Then restate the
+design in prose and confirm it before you author.
+
+The gaps that most often change a Studio flow:
+
+- **Trigger & entry point** — inbound call, message, or conversation, vs. a REST
+  API execution, vs. a subflow. Outbound (reminders, notifications) is typically
+  a REST API execution whose caller POSTs data the flow reads as `{{flow.data.*}}`.
+- **Inbound data** — what the flow receives and how: execution parameters,
+  gathered DTMF/speech, or an HTTP lookup.
+- **Core interaction** — keypad DTMF vs. speech vs. keyword reply; the exact
+  digits/keywords and what each one does.
+- **Decision callbacks** — when the customer decides something, does an external
+  system need to be told (an HTTP Request / Run Function), and what are its
+  request shape, auth, and failure behavior?
+- **Unhappy paths** — no input, invalid input, no match, timeouts, and
+  max-retry exhaustion. Re-prompt how many times, then what?
+- **Branching completeness** — every menu option and Split branch accounted for,
+  including the default / `noMatch` fallback.
+- **Terminal states** — how each branch ends: hang up, final message, or hand
+  off to an agent/queue.
+- **Dynamic values** — greetings, numbers, URLs, and copy that should come from
+  `flow.*` / `trigger.*` rather than being hard-coded.
+
+Ask only what matters for the flow at hand — a trivial auto-responder may need
+none; a reminder, IVR, or booking flow usually needs several.
+
 ## Quickstart
 
 Build a minimal SMS auto-responder flow, validate it, and create it as a draft.
@@ -381,3 +415,4 @@ number, and `caller_id` usually `{{flow.channel.address}}`.
 - **Securing the webhooks Studio calls / signature validation:** `twilio-webhook-architecture`
 - **Routing calls to agents/queues:** `twilio-taskrouter-routing`
 - **Production credentials (API Keys):** `twilio-iam-auth-setup`
+
